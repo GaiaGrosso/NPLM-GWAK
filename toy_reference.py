@@ -10,8 +10,8 @@ import matplotlib.font_manager as font_manager
 plt.rcParams["font.family"] = "serif"
 plt.style.use('classic')
 
-from NNutils_v21 import *
-from PLOTutils import *
+from NNUtils import *
+from PlotUtils import *
 from SampleUtils import *
 parser   = argparse.ArgumentParser()
 
