@@ -10,8 +10,8 @@ import matplotlib.font_manager as font_manager
 plt.rcParams["font.family"] = "serif"
 plt.style.use('classic')
 
-from NNUtils import *
-from Plotutils import *
+from NNutils_v21 import *
+from PLOTutils import *
 from SampleUtils import *
 parser   = argparse.ArgumentParser()
 
@@ -354,7 +354,7 @@ t2=time.time()
 print('End training')
 print('execution time: ', t2-t1)
 
-pred = model(feature)
+pred = model.call(feature)
 nplm_loss_final = NPLMLoss(target, pred)
 # save test statistic                                                                                                                       
 t_file=open(output_folder+'t.txt', 'w')
