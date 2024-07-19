@@ -1,4 +1,4 @@
-# NPLM-GWAK -- dictionary-learning 
+# NPLM-GWAK -- dictionary-learning edition
 apply NPLM method to GWAK outputs using dictionary-learning strategy.
 
 ## Files description:
