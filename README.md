@@ -1,6 +1,10 @@
 # NPLM-GWAK -- dictionary-learning edition
 apply NPLM method to GWAK outputs using dictionary-learning strategy.
 
+## NPLM with dictionary learning
+![alt text](https://github.com/GaiaGrosso/NPLM-GWAK/blob/dictionary-learning/intro1.jpeg?raw=true)
+![alt text](https://github.com/GaiaGrosso/NPLM-GWAK/blob/dictionary-learning/intro2.jpeg?raw=true)
+
 ## Files description:
 ### Background-only toys:
 - `run_reference.py`: file to submit bkg-only toys
