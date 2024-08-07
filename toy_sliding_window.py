@@ -1,4 +1,4 @@
-import glob, h5py, math, time, os, json, random, yaml, argparse, datetime
+import glob, h5py, math, time, os, json, sliding_windowrandom, yaml, argparse, datetime
 from scipy.stats import norm, expon, chi2, uniform, chisquare
 from pathlib import Path
 import numpy as np
@@ -16,11 +16,11 @@ from SampleUtils import *
 parser   = argparse.ArgumentParser()
 
 parser.add_argument('-j', '--jsonfile', type=str, help="json file", required=True)
-parser.add_argument('-s', '--seed', type=int, help="seed", required=False, default=None)
+parser.add_argument('-s', '--slidingwindow', type=int, help="index at which to start reading the data", required=True)
 args     = parser.parse_args()
 
 # random seed
-seed = args.seed
+seed = args.slidingwindow+1
 if seed==None:
     seed = datetime.datetime.now().microsecond+datetime.datetime.now().second+datetime.datetime.now().minute
 np.random.seed(seed)
@@ -33,9 +33,9 @@ with open(args.jsonfile, 'r') as jsonfile:
 # problem definition
 NR = config_json["N_Ref"]
 ND = config_json["N_Data"]
-
+signal = config_json["signal"]
 w_ref = ND*1./NR
-#sliding_window=args.slidingwindow
+sliding_window=args.slidingwindow
 
 # plot options                                                                                                                                        
 labels_vars=["H background-like", "L background-like", "H BBH-like",
@@ -43,30 +43,23 @@ labels_vars=["H background-like", "L background-like", "H BBH-like",
         "L SG lf - like", "H SG hf - like", "L SG hf - like",
         "Frequency correlation"]
 binsrange = {label : np.linspace(0, 50, 40) for label in labels_vars}
-yrange = {label: [-5, 5] for label in labels_vars}
+yrange = {label: [0, 5] for label in labels_vars}
 
 
 # data
-folder_root = "/n/home00/ggrosso/NPLM-GWAK/data/" # where the data are stored                                                                     
+folder_root = "/n/home00/ggrosso/NPLM-GWAK/data/signal/" # where the data are stored                                                                     
 bkg_path = folder_root + 'background_11dim.npy'
-#data_path = folder_root + signal + '_11dim.npy'
+data_path = folder_root + signal + '_11dim.npy'
 ref_all = np.load(bkg_path)
-#data_all = np.load(data_path).reshape((-1, 11))
-#data_all = data_all[sliding_window*ND:(sliding_window+1)*ND, :]
+data_all = np.load(data_path).reshape((-1, 11))
+data_all = data_all[sliding_window*ND:(sliding_window+1)*ND, :]
 
 mean_all, std_all = np.mean(ref_all, axis=0), np.std(ref_all, axis=0)
 mean_R, std_R = mean_all, std_all
 ref_all_std  = standardize(ref_all, mean_all, std_all).astype('f')
-#data_all_std = standardize(data_all, mean_all, std_all).astype('f')
-
-#flk_sigma = candidate_sigma(ref_all_std[:1000, :], perc=[5, 25, 50, 75, 95])
-#print('flk_sigma', flk_sigma)
-#exit()
-
-idx = np.arange(ref_all_std.shape[0])
-np.random.shuffle(idx)
-featureRef = ref_all_std[idx[:NR], :]
-featureData = ref_all_std[idx[NR:NR+ND], :]
+data_all_std = standardize(data_all, mean_all, std_all).astype('f')
+featureRef = ref_all_std[:NR, :]
+featureData = data_all_std[sliding_window*ND:(sliding_window+1)*ND, :]
 
 # labels
 label_R = np.zeros((NR, 1))
@@ -95,10 +88,10 @@ if M<=ND:
     centroids_init = featureData[idx, :]
 else:
     idx = np.random.randint(len(featureRef), size=M-ND)
-    centroids_init = np.concatenate((featureData, featureRef[idx, :]), axis=0)
-    
+    centroids_init = np.concatenate((featureData, featureRef[idx, :]), axis=0)    
+
 widths_init    = np.ones((M, d))*config_json["width_init"]                         
-coeffs_init    = np.random.uniform(low=-10000, high=10000, size=(M, 1))
+coeffs_init    = np.random.uniform(low=-100, high=100, size=(M, 1))
 
 lam_coeffs   = config_json["coeffs_reg_lambda"]
 lam_widths   = config_json["widths_reg_lambda"]
@@ -115,12 +108,12 @@ train_widths   = config_json["train_widths"]
 train_centroids= config_json["train_centroids"]
 
 # convert to tf tensors                                                                                                                           
-feature = tf.convert_to_tensor(feature, dtype=tf.double)
-target  = tf.convert_to_tensor(target, dtype=tf.double)
+feature = tf.convert_to_tensor(feature, dtype=tf.float32)
+target  = tf.convert_to_tensor(target, dtype=tf.float32)
 
 ##### define output path ######################                                                                                   
 OUTPUT_PATH    = config_json["output_directory"]
-OUTPUT_FILE_ID = '/s%i/'%(seed)
+OUTPUT_FILE_ID = '/sw%i/'%(sliding_window)
 folder_out = OUTPUT_PATH+OUTPUT_FILE_ID
 if not os.path.exists(folder_out):
     os.makedirs(folder_out)
@@ -163,7 +156,7 @@ nplm_loss_history = np.array([nplm_loss_value])
 epochs_history    = np.array([0])
 loss_history      = np.array([loss_value])
 
-optimizer = tf.keras.optimizers.Adam()
+optimizer = tf.keras.optimizers.legacy.Adam()
 t1 =time.time()
 
 #print(model.trainable_variables)

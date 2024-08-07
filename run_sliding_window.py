@@ -1,8 +1,9 @@
 import os, json, argparse, glob, time, datetime
 import numpy as np
-import os.path
+#import os.path
 
-OUTPUT_DIRECTORY = '/n/home00/ggrosso/NPLM-GWAK/dictionary-learning/out/'
+OUTPUT_DIRECTORY = '/n/home00/ggrosso/NPLM-GWAK/dictionary-learning/out/signals/'
+
 def create_config_file(config_table, OUTPUT_DIRECTORY):
     with open('%s/config.json'%(OUTPUT_DIRECTORY), 'w') as outfile:
         json.dump(config_table, outfile, indent=4)
@@ -10,22 +11,23 @@ def create_config_file(config_table, OUTPUT_DIRECTORY):
 
 # configuration dictionary
 config_json = {
-    "N_Ref"   : 600,
+    "N_Ref"   : 2420,
     "N_Data"   : 60,
+    "signal": 'bbh',
     "output_directory": OUTPUT_DIRECTORY,
     "lumi_frac": 1,
-    "epochs": 200,
-    "sub_epochs": 100,
+    "epochs": 1000,
+    "sub_epochs": 10,
     "patience": 10,
-    "plt_patience": 200,
-    "width_init": 4.0, #[0.1, 0.3, 0.7, 1.4, 3.0]
-    "number_centroids": 10,#1000,
-    "coeffs_reg_lambda":  1e-09,
+    "plt_patience": 1000,
+    "width_init": 2.6, #[0.1, 0.3, 0.7, 1.4, 3.0]
+    "number_centroids": 60,#1000,
+    "coeffs_reg_lambda":  1e-11,
     "widths_reg_lambda":  0,
-    "entropy_reg_lambda": 1.,
-    "resolution_scale": [0.01],
+    "entropy_reg_lambda": 0.01,
+    "resolution_scale": [0],
     "resolution_const": [0],
-    "coeffs_clip": 10000000,
+    "coeffs_clip": 1000000,
     "train_coeffs": True,
     "train_widths": False,
     "train_centroids": True,
@@ -50,7 +52,7 @@ if config_json["train_centroids"]==True:
 
 # problem specs
 ID += '_NR'+str(config_json["N_Ref"])+'_ND'+str(config_json["N_Data"])
-ID += '_background'
+ID += '_'+config_json['signal']
 res_bound_string = '/res-scale'
 for r in config_json["resolution_scale"]:
     res_bound_string +="_%s"%(str(r))
@@ -66,11 +68,11 @@ if __name__ == '__main__':
     parser.add_argument('-p','--pyscript', type=str, help="name of python script to execute", required=True)
     parser.add_argument('-l','--local',    type=int, help='if to be run locally',             required=False, default=0)
     parser.add_argument('-t', '--toys',    type=int, help="number of toys to be processed",   required=False, default=100)
-    parser.add_argument('-s', '--firstseed', type=int, help="first seed for toys (if specified the the toys are launched with deterministic seed incresing of one unit)", required=False, default=0)
+    parser.add_argument('-s', '--slidingwindow', type=int, help="first seed for toys (if specified the the toys are launched with deterministic seed incresing of one unit)", required=False, default=0)
     args     = parser.parse_args()
     ntoys    = args.toys
     pyscript = args.pyscript
-    firstseed= args.firstseed
+    firstseed= args.slidingwindow
     config_json['pyscript'] = pyscript
     
     pyscript_str = pyscript.replace('.py', '')
@@ -100,7 +102,7 @@ if __name__ == '__main__':
             script_sbatch.write("#!/bin/bash\n")
             script_sbatch.write("#SBATCH -c 1\n")
             script_sbatch.write("#SBATCH --gpus 1\n")
-            script_sbatch.write("#SBATCH -t 0-04:00\n")
+            script_sbatch.write("#SBATCH -t 0-03:00\n")
             script_sbatch.write("#SBATCH -p gpu\n")
             #script_sbatch.write("#SBATCH -p serial_re\n")
             script_sbatch.write("#SBATCH --mem=5000\n")

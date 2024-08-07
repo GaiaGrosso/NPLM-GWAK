@@ -1,4 +1,4 @@
-# NPLM-GWAK -- dictionary-learning edition
+# NPLM-GWAK -- dictionary-learning edition (old tensorflow version)
 apply NPLM method to GWAK outputs using dictionary-learning strategy.
 
 ## NPLM with dictionary learning
